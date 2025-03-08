@@ -5,7 +5,7 @@ import { User, UserFormData } from '../types/user';
 import UserTable from '../components/UserTable';
 import UserForm from '../components/UserForm';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchUsers, addUser, updateUser, deleteUser, startOptimisticUpdate, startOptimisticDelete, updateUserAsync, deleteUserAsync } from '../store/slices/usersSlice';
+import { fetchUsers, addUser, startOptimisticUpdate, startOptimisticDelete, updateUserAsync, deleteUserAsync } from '../store/slices/usersSlice';
 
 export default function Home() {
   const dispatch = useAppDispatch();
