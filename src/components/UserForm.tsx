@@ -56,7 +56,9 @@ const UserForm = ({ onSubmit, editingUser }: UserFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700">Name</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+          Name
+        </label>
         <input
           type="text"
           value={formState.name}
@@ -65,12 +67,16 @@ const UserForm = ({ onSubmit, editingUser }: UserFormProps) => {
             field: 'name', 
             value: e.target.value 
           })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 bg-white dark:bg-gray-700 
+            dark:border-gray-600 dark:text-white shadow-sm px-4 py-2 focus:border-indigo-500 
+            focus:ring-indigo-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-400"
           required
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700">Email</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+          Email
+        </label>
         <input
           type="email"
           value={formState.email}
@@ -79,12 +85,16 @@ const UserForm = ({ onSubmit, editingUser }: UserFormProps) => {
             field: 'email', 
             value: e.target.value 
           })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 bg-white dark:bg-gray-700 
+            dark:border-gray-600 dark:text-white shadow-sm px-4 py-2 focus:border-indigo-500 
+            focus:ring-indigo-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-400"
           required
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700">Phone</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+          Phone
+        </label>
         <input
           type="tel"
           value={formState.phone}
@@ -93,13 +103,17 @@ const UserForm = ({ onSubmit, editingUser }: UserFormProps) => {
             field: 'phone', 
             value: e.target.value 
           })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 bg-white dark:bg-gray-700 
+            dark:border-gray-600 dark:text-white shadow-sm px-4 py-2 focus:border-indigo-500 
+            focus:ring-indigo-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-400"
           required
         />
       </div>
       <button
         type="submit"
-        className="bg-green-500 text-white px-4 py-2 rounded"
+        className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 
+          focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 
+          transition-colors dark:hover:bg-indigo-500"
       >
         {editingUser ? 'Update User' : 'Add User'}
       </button>
