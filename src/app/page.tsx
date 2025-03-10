@@ -5,7 +5,16 @@ import { User, UserFormData } from '../types/user';
 import UserTable from '../components/UserTable';
 import UserForm from '../components/UserForm';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchUsers, addUser, startOptimisticUpdate, startOptimisticDelete, updateUserAsync, deleteUserAsync } from '../store/slices/usersSlice';
+import { 
+  fetchUsers,
+  startOptimisticUpdate,
+  startOptimisticDelete,
+  updateUserAsync,
+  deleteUserAsync,
+  createUserAsync,
+  startOptimisticCreate,
+  clearError
+} from '../store/slices/usersSlice';
 
 export default function Home() {
   const dispatch = useAppDispatch();
@@ -20,8 +29,32 @@ export default function Home() {
     }
   }, [status, dispatch]);
 
-  const handleAddUser = (formData: UserFormData) => {
-    dispatch(addUser(formData));
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        dispatch(clearError());
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, dispatch]);
+
+  const handleAddUser = async (formData: UserFormData) => {
+    // Create a temporary user with a temporary ID
+    const tempUser: User = {
+      id: Math.max(...users.map(u => u.id), 0) + 1,
+      ...formData
+    };
+    
+    // Apply optimistic create
+    dispatch(startOptimisticCreate(tempUser));
+    
+    try {
+      // Perform actual create
+      await dispatch(createUserAsync(formData)).unwrap();
+    } catch (error) {
+      console.error('Failed to create user:', error);
+    }
   };
 
   const handleUpdateUser = async (formData: UserFormData) => {

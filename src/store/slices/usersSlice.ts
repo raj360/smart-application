@@ -8,7 +8,7 @@ interface UsersState {
   error: string | null;
   optimisticUpdates: {
     [key: number]: {
-      type: 'delete' | 'update';
+      type: 'delete' | 'update' | 'create';
       previousData?: User;
     };
   };
@@ -31,17 +31,51 @@ export const fetchUsers = createAsyncThunk(
 
 export const updateUserAsync = createAsyncThunk(
   'users/updateUserAsync',
-  async (user: User) => {
-    const response = await api.updateUser(user);
-    return response;
+  async (user: User, {rejectWithValue }) => {
+    
+    // Check if this is a user we originally fetched from the API (IDs 1-10 for JSONPlaceholder)
+    const isOriginalUser = user.id <= 10;
+    
+    if (isOriginalUser) {
+      try {
+        const response = await api.updateUser(user);
+        return response;
+      } catch (error) {
+        return rejectWithValue('Failed to update user. Server error occurred.');
+      }
+    } else {
+      // For users we created locally (which aren't really on the server)
+      return rejectWithValue('Cannot update user. This user exists only locally and has not been persisted on the server.');
+    }
   }
 );
 
 export const deleteUserAsync = createAsyncThunk(
   'users/deleteUserAsync',
-  async (userId: number) => {
-    await api.deleteUser(userId);
-    return userId;
+  async (userId: number, { rejectWithValue }) => {
+    // Check if this is a user from the original API (IDs 1-10 for JSONPlaceholder)
+    const isOriginalUser = userId <= 10;
+    
+    if (isOriginalUser) {
+      try {
+        await api.deleteUser(userId);
+        return userId;
+      } catch (error) {
+        return rejectWithValue('Failed to delete user. Server error occurred.');
+      }
+    } else {
+      // For locally created users, just return the ID without an error
+      // This is different from update because deleting a non-existent item is idempotent
+      return userId;
+    }
+  }
+);
+
+export const createUserAsync = createAsyncThunk(
+  'users/createUserAsync',
+  async (userData: UserFormData) => {
+    const response = await api.createUser(userData);
+    return response;
   }
 );
 
@@ -49,13 +83,6 @@ const usersSlice = createSlice({
   name: 'users',
   initialState,
   reducers: {
-    addUser: (state, action: PayloadAction<UserFormData>) => {
-      const newUser: User = {
-        id: Math.max(...state.users.map(u => u.id), 0) + 1,
-        ...action.payload
-      };
-      state.users.push(newUser);
-    },
     updateUser: (state, action: PayloadAction<User>) => {
       const index = state.users.findIndex(user => user.id === action.payload.id);
       if (index !== -1) {
@@ -87,6 +114,13 @@ const usersSlice = createSlice({
         state.users = state.users.filter(u => u.id !== userId);
       }
     },
+    startOptimisticCreate: (state, action: PayloadAction<User>) => {
+      state.optimisticUpdates[action.payload.id] = {
+        type: 'create',
+        previousData: undefined,
+      };
+      state.users.push(action.payload);
+    },
     rollbackOptimisticUpdate: (state, action: PayloadAction<number>) => {
       const userId = action.payload;
       const update = state.optimisticUpdates[userId];
@@ -101,6 +135,9 @@ const usersSlice = createSlice({
         }
       }
       delete state.optimisticUpdates[userId];
+    },
+    clearError: (state) => {
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -131,7 +168,9 @@ const usersSlice = createSlice({
           }
           delete state.optimisticUpdates[userId];
         }
-        state.error = 'Failed to update user';
+        
+        // Use the custom error message if available
+        state.error = action.payload as string || 'Failed to update user';
       })
       .addCase(deleteUserAsync.fulfilled, (state, action) => {
         delete state.optimisticUpdates[action.payload];
@@ -144,17 +183,32 @@ const usersSlice = createSlice({
         }
         delete state.optimisticUpdates[userId];
         state.error = 'Failed to delete user';
+      })
+      .addCase(createUserAsync.fulfilled, (state, action) => {
+        const tempId = Math.max(...state.users.map(u => u.id), 0);
+        const index = state.users.findIndex(u => u.id === tempId);
+        if (index !== -1) {
+          state.users[index] = action.payload;
+        }
+        delete state.optimisticUpdates[tempId];
+      })
+      .addCase(createUserAsync.rejected, (state, action) => {
+        const tempId = Math.max(...state.users.map(u => u.id), 0);
+        state.users = state.users.filter(u => u.id !== tempId);
+        delete state.optimisticUpdates[tempId];
+        state.error = 'Failed to create user';
       });
   },
 });
 
 export const {
-  addUser,
   updateUser,
   deleteUser,
   startOptimisticUpdate,
   startOptimisticDelete,
+  startOptimisticCreate,
   rollbackOptimisticUpdate,
+  clearError,
 } = usersSlice.actions;
 
 export default usersSlice.reducer; 
